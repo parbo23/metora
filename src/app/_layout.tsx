@@ -1,18 +1,37 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import '@/global.css';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
-SplashScreen.preventAutoHideAsync();
+import { copy } from '@/copy/en';
+import { colors, typography } from '@/theme';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+/**
+ * Root navigator. The tab group hides the stack header and draws its own
+ * large titles; the single-photo flow uses native headers with a back chevron.
+ * The paywall gate is added in Phase 2.
+ */
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.navy900,
+          headerTitleStyle: { ...typography.cardHeading, color: colors.textPrimary },
+          headerBackButtonDisplayMode: 'minimal',
+          contentStyle: { backgroundColor: colors.background },
+        }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="photo/[id]" options={{ title: copy.metadata.title }} />
+        <Stack.Screen name="photo/clean" options={{ title: copy.clean.title }} />
+        <Stack.Screen
+          name="photo/result"
+          options={{ title: copy.result.title, headerBackVisible: false, gestureEnabled: false }}
+        />
+      </Stack>
+    </>
   );
 }
