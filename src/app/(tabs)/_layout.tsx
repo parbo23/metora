@@ -10,7 +10,8 @@ export default function TabsLayout() {
       tintColor={colors.navy900}
       backgroundColor={colors.card}
       iconColor={{ default: colors.textSecondary, selected: colors.navy900 }}
-      labelStyle={{ color: colors.textSecondary, selected: { color: colors.navy900 } }}>
+      labelStyle={{ color: colors.textSecondary, selected: { color: colors.navy900 } }}
+    >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{copy.tabs.home}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={icons.home.ios} md={icons.home.material} />

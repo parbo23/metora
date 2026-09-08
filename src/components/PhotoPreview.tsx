@@ -2,6 +2,7 @@ import { Image, type ImageSource } from 'expo-image';
 import { StyleSheet, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 
 import { colors, radius } from '@/theme';
+import { useReduceMotion } from '@/utils/useReduceMotion';
 
 interface PhotoPreviewProps {
   source: ImageSourcePropType | ImageSource;
@@ -24,12 +25,13 @@ export function PhotoPreview({
   style,
   accessibilityLabel = 'Selected photo',
 }: PhotoPreviewProps) {
+  const reduceMotion = useReduceMotion();
   return (
     <View style={[styles.frame, { aspectRatio, borderRadius }, style]}>
       <Image
         source={source as ImageSource}
         contentFit="cover"
-        transition={150}
+        transition={reduceMotion ? 0 : 150}
         style={styles.image}
         accessible
         accessibilityLabel={accessibilityLabel}

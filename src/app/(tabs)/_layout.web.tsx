@@ -1,10 +1,4 @@
-import {
-  TabList,
-  TabSlot,
-  TabTrigger,
-  Tabs,
-  type TabTriggerSlotProps,
-} from 'expo-router/ui';
+import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -53,7 +47,8 @@ function TabButton({ icon, label, isFocused, ...props }: TabButtonProps) {
       accessibilityRole="tab"
       accessibilityState={{ selected: isFocused }}
       accessibilityLabel={label}
-      style={styles.tab}>
+      style={styles.tab}
+    >
       <Icon name={icon} size={22} color={tint} />
       <AppText variant="caption" style={{ color: tint }}>
         {label}

@@ -14,10 +14,7 @@ interface PrivacyCardProps {
   icon?: IconName;
 }
 
-const variantStyles: Record<
-  PrivacyCardVariant,
-  { background: string; text: string; icon: IconName }
-> = {
+const variantStyles: Record<PrivacyCardVariant, { background: string; text: string; icon: IconName }> = {
   warning: { background: colors.warningBackground, text: colors.warningText, icon: 'warning' },
   success: { background: colors.successBackground, text: colors.textPrimary, icon: 'lock' },
   neutral: { background: colors.navySoft, text: colors.textPrimary, icon: 'shield' },
@@ -29,20 +26,26 @@ const variantStyles: Record<
  */
 export function PrivacyCard({ variant, title, body, icon }: PrivacyCardProps) {
   const theme = variantStyles[variant];
-  const iconColor = variant === 'success' ? colors.green500 : variant === 'neutral' ? colors.navy800 : theme.text;
+  const iconColor =
+    variant === 'success' ? colors.green500 : variant === 'neutral' ? colors.navy800 : theme.text;
 
   return (
     <View
-      accessibilityRole="summary"
+      accessibilityRole={variant === 'warning' ? 'alert' : 'summary'}
+      accessibilityLiveRegion="polite"
       accessibilityLabel={body ? `${title}. ${body}` : title}
-      style={[styles.card, { backgroundColor: theme.background }]}>
+      style={[styles.card, { backgroundColor: theme.background }]}
+    >
       <Icon name={icon ?? theme.icon} size={22} color={iconColor} style={styles.icon} />
       <View style={styles.text}>
         <AppText variant="cardHeading" style={{ color: theme.text }}>
           {title}
         </AppText>
         {body ? (
-          <AppText variant="secondary" style={{ color: variant === 'warning' ? theme.text : colors.textSecondary }}>
+          <AppText
+            variant="secondary"
+            style={{ color: variant === 'warning' ? theme.text : colors.textSecondary }}
+          >
             {body}
           </AppText>
         ) : null}

@@ -1,57 +1,95 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Card } from '@/components/Card';
-import { Icon } from '@/components/Icon';
-import { PhotoPreview } from '@/components/PhotoPreview';
+import { IconBadge } from '@/components/Icon';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { PrivacyCard } from '@/components/PrivacyCard';
 import { Screen } from '@/components/Screen';
 import { copy } from '@/copy/en';
-import { mockRecentItems } from '@/features/metadata/mock';
+import { RecentList } from '@/features/recent/RecentList';
+import { useRecentHistory } from '@/features/recent/RecentHistoryProvider';
 import { colors, spacing } from '@/theme';
 
-/** Recent — lightweight local log. Phase 1 renders static rows only. */
+/**
+ * Recent — a local activity log, not a photo archive. Newest first. Clear
+ * History asks for confirmation inline, then deletes the log immediately.
+ */
 export default function RecentScreen() {
+  const { records, isLoaded, clearHistory } = useRecentHistory();
+  const [confirming, setConfirming] = useState(false);
+  const [cleared, setCleared] = useState(false);
+
+  const onClear = async () => {
+    setConfirming(false);
+    await clearHistory();
+    setCleared(true);
+  };
+
   return (
     <Screen withTabBar>
       <View style={styles.header}>
         <AppText variant="hero" color="navy900">
           {copy.recent.title}
         </AppText>
-        <PrimaryButton variant="text" title={copy.recent.clearHistory} onPress={() => {}} />
+        {records.length > 0 && !confirming ? (
+          <PrimaryButton
+            variant="text"
+            title={copy.recent.clearHistory}
+            onPress={() => {
+              setCleared(false);
+              setConfirming(true);
+            }}
+          />
+        ) : null}
       </View>
 
-      <Card padded={false}>
-        {mockRecentItems.map((item, index) => (
-          <View
-            key={item.id}
-            style={[styles.row, index > 0 && styles.rowDivider]}
-            accessibilityRole="text"
-            accessibilityLabel={`${item.fileName}, ${item.status}, ${item.when}`}>
-            <PhotoPreview
-              source={item.source}
-              aspectRatio={1}
-              borderRadius={10}
-              style={styles.thumb}
-              accessibilityLabel={item.fileName}
-            />
-            <View style={styles.rowText}>
-              <AppText variant="bodyMedium" numberOfLines={1}>
-                {item.fileName}
-              </AppText>
-              <View style={styles.statusRow}>
-                <Icon name="checkCircle" size={14} color={colors.green500} />
-                <AppText variant="secondary" color="textSecondary">
-                  {item.status}
-                </AppText>
-              </View>
+      <PrivacyCard
+        variant="neutral"
+        icon="privacy"
+        title={copy.recent.privacyTitle}
+        body={copy.recent.privacyBody}
+      />
+
+      {confirming ? (
+        <Card style={styles.confirm} accessibilityRole="alert">
+          <AppText variant="cardHeading">{copy.recent.confirmTitle}</AppText>
+          <AppText variant="secondary" color="textSecondary">
+            {copy.recent.confirmBody}
+          </AppText>
+          <View style={styles.confirmActions}>
+            <View style={styles.confirmButton}>
+              <PrimaryButton
+                title={copy.recent.cancel}
+                variant="secondary"
+                onPress={() => setConfirming(false)}
+              />
             </View>
-            <AppText variant="caption" color="textSecondary" align="right">
-              {item.when}
-            </AppText>
+            <View style={styles.confirmButton}>
+              <PrimaryButton title={copy.recent.confirmClear} onPress={() => void onClear()} />
+            </View>
           </View>
-        ))}
-      </Card>
+        </Card>
+      ) : null}
+
+      {cleared && records.length === 0 ? (
+        <PrivacyCard variant="success" icon="checkCircle" title={copy.recent.cleared} />
+      ) : null}
+
+      {isLoaded && records.length === 0 ? (
+        <Card style={styles.empty} accessibilityRole="summary">
+          <IconBadge name="recent" badgeSize={48} size={22} />
+          <AppText variant="cardHeading" align="center">
+            {copy.recent.emptyTitle}
+          </AppText>
+          <AppText variant="secondary" color="textSecondary" align="center">
+            {copy.recent.emptyBody}
+          </AppText>
+        </Card>
+      ) : null}
+
+      {records.length > 0 ? <RecentList records={records} /> : null}
     </Screen>
   );
 }
@@ -63,28 +101,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.sm,
   },
-  row: {
+  confirm: {
+    gap: spacing.sm,
+    borderColor: colors.warningBackground,
+  },
+  confirmActions: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 64,
+    marginTop: spacing.xs,
   },
-  rowDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.divider,
-  },
-  rowText: {
+  confirmButton: {
     flex: 1,
-    gap: 2,
   },
-  statusRow: {
-    flexDirection: 'row',
+  empty: {
     alignItems: 'center',
-    gap: spacing.xs,
-  },
-  thumb: {
-    width: 48,
+    gap: spacing.sm,
+    paddingVertical: spacing.xxl,
   },
 });

@@ -13,20 +13,35 @@ interface CleanOptionCardProps {
   onPress: () => void;
   /** Small pill shown for the recommended option. */
   badge?: string;
+  /**
+   * radio: one of many (round indicator). checkbox: any combination (rounded
+   * square indicator). Both use the same teal selected styling.
+   */
+  indicator?: 'radio' | 'checkbox';
 }
 
 /**
- * Radio-style selection card from the Clean Up screen. Selected state uses a
- * teal border plus a filled check indicator so it never relies on color alone.
+ * Selection card from the Clean Up screen. Selected state uses a teal border
+ * plus a filled check indicator so it never relies on color alone.
  */
-export function CleanOptionCard({ icon, heading, description, selected, onPress, badge }: CleanOptionCardProps) {
+export function CleanOptionCard({
+  icon,
+  heading,
+  description,
+  selected,
+  onPress,
+  badge,
+  indicator = 'radio',
+}: CleanOptionCardProps) {
+  const checkbox = indicator === 'checkbox';
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="radio"
+      accessibilityRole={checkbox ? 'checkbox' : 'radio'}
       accessibilityState={{ selected, checked: selected }}
       accessibilityLabel={`${heading}. ${description}`}
-      style={({ pressed }) => [styles.card, selected && styles.selected, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.card, selected && styles.selected, pressed && styles.pressed]}
+    >
       <IconBadge
         name={icon}
         backgroundColor={selected ? colors.tealSoft : colors.navySoft}
@@ -47,7 +62,13 @@ export function CleanOptionCard({ icon, heading, description, selected, onPress,
           {description}
         </AppText>
       </View>
-      <View style={[styles.indicator, selected && styles.indicatorSelected]}>
+      <View
+        style={[
+          styles.indicator,
+          checkbox ? styles.indicatorCheckbox : styles.indicatorRadio,
+          selected && styles.indicatorSelected,
+        ]}
+      >
         {selected ? <Icon name="check" size={13} color={colors.textOnDark} /> : null}
       </View>
     </Pressable>
@@ -91,11 +112,16 @@ const styles = StyleSheet.create({
   indicator: {
     width: 24,
     height: 24,
-    borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.divider,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  indicatorRadio: {
+    borderRadius: radius.pill,
+  },
+  indicatorCheckbox: {
+    borderRadius: 7,
   },
   indicatorSelected: {
     backgroundColor: colors.teal500,

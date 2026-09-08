@@ -32,7 +32,8 @@ export function Screen({ children, safeTop = true, withTabBar = false, footer, c
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }, contentStyle]}
         contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         {children}
       </ScrollView>
       {footer ? (
@@ -40,7 +41,8 @@ export function Screen({ children, safeTop = true, withTabBar = false, footer, c
           style={[
             styles.footer,
             { paddingBottom: Math.max(insets.bottom, spacing.lg) + (withTabBar ? TAB_BAR_INSET : 0) },
-          ]}>
+          ]}
+        >
           {footer}
         </View>
       ) : null}

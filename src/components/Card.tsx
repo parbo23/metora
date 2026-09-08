@@ -14,12 +14,7 @@ export function Card({ size = 'standard', padded = true, style, ...rest }: CardP
   return (
     <View
       {...rest}
-      style={[
-        styles.base,
-        size === 'large' ? styles.large : styles.standard,
-        padded && styles.padded,
-        style,
-      ]}
+      style={[styles.base, size === 'large' ? styles.large : styles.standard, padded && styles.padded, style]}
     />
   );
 }

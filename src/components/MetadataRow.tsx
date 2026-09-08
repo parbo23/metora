@@ -40,12 +40,10 @@ export function MetadataRow({
         styles.row,
         divider && styles.divider,
         pressed && interactive && styles.pressed,
-      ]}>
+      ]}
+    >
       <IconBadge name={icon} />
-      <AppText
-        variant="bodyMedium"
-        style={value ? styles.title : styles.titleOnly}
-        numberOfLines={1}>
+      <AppText variant="bodyMedium" style={value ? styles.title : styles.titleOnly} numberOfLines={1}>
         {title}
       </AppText>
       {value ? (
@@ -54,7 +52,8 @@ export function MetadataRow({
           color="textSecondary"
           align="right"
           style={styles.value}
-          numberOfLines={2}>
+          numberOfLines={2}
+        >
           {value}
         </AppText>
       ) : null}

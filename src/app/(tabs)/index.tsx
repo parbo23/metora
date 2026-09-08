@@ -5,9 +5,10 @@ import { AppText } from '@/components/AppText';
 import { Card } from '@/components/Card';
 import { EmptyStateCard } from '@/components/EmptyStateCard';
 import { IconBadge } from '@/components/Icon';
+import { PrivacyCard } from '@/components/PrivacyCard';
 import { Screen } from '@/components/Screen';
 import { copy } from '@/copy/en';
-import { mockPhoto } from '@/features/metadata/mock';
+import { usePhotoWorkflow } from '@/features/workflow/PhotoWorkflowProvider';
 import { colors, spacing, type IconName } from '@/theme';
 
 const featureIcons: { icon: IconName; color: string; background: string }[] = [
@@ -16,9 +17,22 @@ const featureIcons: { icon: IconName; color: string; background: string }[] = [
   { icon: 'lock', color: colors.green500, background: colors.successBackground },
 ];
 
-/** Home — phone 1 on the design board. Phase 1 routes to static mock data. */
+/**
+ * Home — phone 1 on the design board.
+ * One selected photo → Metadata detail. Several → Batch.
+ */
 export default function HomeScreen() {
   const router = useRouter();
+  const { choosePhotos, isPicking, error } = usePhotoWorkflow();
+
+  const onChoosePhotos = async () => {
+    const route = await choosePhotos({ allowsMultiple: true });
+    if (route?.kind === 'single') {
+      router.push({ pathname: '/photo/[id]', params: { id: route.photoId } });
+    } else if (route?.kind === 'batch') {
+      router.navigate('/batch');
+    }
+  };
 
   return (
     <Screen withTabBar>
@@ -32,9 +46,18 @@ export default function HomeScreen() {
       </View>
 
       <EmptyStateCard
-        actionTitle={copy.home.choosePhotos}
-        onAction={() => router.push({ pathname: '/photo/[id]', params: { id: mockPhoto.id } })}
+        actionTitle={isPicking ? copy.home.loadingPhotos : copy.home.choosePhotos}
+        onAction={() => void onChoosePhotos()}
+        actionLoading={isPicking}
       />
+
+      {error === 'unreadable' ? (
+        <PrivacyCard
+          variant="warning"
+          title={copy.errors.photoUnreadableTitle}
+          body={copy.errors.photoUnreadableBody}
+        />
+      ) : null}
 
       <View style={styles.features}>
         {copy.home.features.map((feature, index) => {
@@ -44,7 +67,8 @@ export default function HomeScreen() {
               key={feature.title}
               style={styles.featureCard}
               accessibilityRole="summary"
-              accessibilityLabel={`${feature.title}. ${feature.description}`}>
+              accessibilityLabel={`${feature.title}. ${feature.description}`}
+            >
               <IconBadge
                 name={look.icon}
                 color={look.color}

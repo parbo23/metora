@@ -45,7 +45,8 @@ export function PrimaryButton({
         variant === 'text' && styles.text,
         pressed && styles.pressed,
         isDisabled && styles.disabled,
-      ]}>
+      ]}
+    >
       {loading ? (
         <ActivityIndicator color={variant === 'primary' ? colors.textOnDark : colors.navy900} />
       ) : (

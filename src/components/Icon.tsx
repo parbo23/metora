@@ -47,7 +47,8 @@ export function IconBadge({
         styles.badge,
         { width: badgeSize, height: badgeSize, borderRadius: radius.pill, backgroundColor },
         style,
-      ]}>
+      ]}
+    >
       <Icon {...rest} size={size} color={color} />
     </View>
   );

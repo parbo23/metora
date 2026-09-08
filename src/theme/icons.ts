@@ -25,6 +25,7 @@ export const icons = {
   checkCircle: { ios: 'checkmark.circle.fill', material: 'check_circle' },
   warning: { ios: 'exclamationmark.triangle.fill', material: 'warning' },
   chevronRight: { ios: 'chevron.right', material: 'chevron_right' },
+  chevronDown: { ios: 'chevron.down', material: 'expand_more' },
   arrowRight: { ios: 'arrow.right', material: 'arrow_forward' },
   plus: { ios: 'plus', material: 'add' },
   search: { ios: 'magnifyingglass', material: 'search' },
