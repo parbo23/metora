@@ -16,13 +16,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   slug: 'metora',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './assets/images/icon.png',
+  // App Store icon: 1024x1024 RGB, square corners, no alpha (assets/icon.png).
+  icon: './assets/icon.png',
   scheme: 'metora',
   userInterfaceStyle: 'light',
   ios: {
     bundleIdentifier: 'com.metora.app',
+    // iPhone only: builds with TARGETED_DEVICE_FAMILY = "1". Metora's layouts are
+    // designed for one-handed phone use, so iPad is out of scope for now.
     supportsTablet: false,
-    icon: './assets/images/icon.png',
+    icon: './assets/icon.png',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },

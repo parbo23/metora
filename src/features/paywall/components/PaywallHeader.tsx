@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { copy } from '@/copy/en';
 import { colors, radius, spacing } from '@/theme';
 
-const appIcon = require('@/assets/images/icon.png');
+const appIcon = require('@/assets/icon.png');
 
 /** App icon + brand name, as specified for the top of Screen 0. */
 export function PaywallHeader() {
