@@ -6,8 +6,8 @@
 export function devLog(message: string, detail?: unknown): void {
   if (!__DEV__) return;
   if (detail === undefined) {
-    console.log(`[Metora] ${message}`);
+    console.log(`[Shot On] ${message}`);
   } else {
-    console.log(`[Metora] ${message}`, detail);
+    console.log(`[Shot On] ${message}`, detail);
   }
 }

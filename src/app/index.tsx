@@ -26,14 +26,9 @@ export default function HomeScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <View style={styles.titles}>
-          <AppText variant="hero" color="navy900">
-            {copy.brand}
-          </AppText>
-          <AppText variant="secondary" color="textSecondary">
-            {copy.home.subtitle}
-          </AppText>
-        </View>
+        <AppText variant="hero" color="navy900" style={styles.brand}>
+          {copy.brand}
+        </AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={copy.settings.title}
@@ -46,7 +41,9 @@ export default function HomeScreen() {
       </View>
 
       <EmptyStateCard
-        title={copy.home.emptyTitle}
+        title={copy.home.headline}
+        description={copy.home.subtitle}
+        exampleLabel={copy.home.exampleLabel}
         actionTitle={isPicking ? copy.home.loadingPhoto : copy.home.choosePhoto}
         onAction={() => void onChoosePhoto()}
         actionLoading={isPicking}
@@ -66,14 +63,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: spacing.sm,
     gap: spacing.md,
   },
-  titles: {
+  brand: {
     flex: 1,
-    gap: spacing.xs,
   },
   settingsButton: {
     width: 44,

@@ -4,15 +4,18 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
  * Expo app config. Replaces app.json so the EAS project id can come from the
  * environment instead of being committed.
  *
+ * "Shot On" is the display name; the slug, scheme and bundle identifier keep
+ * their original Metora values on purpose: the bundle id is the App Store
+ * listing and the slug is the EAS project.
+ *
  * Build numbers are managed by EAS (appVersionSource: remote in eas.json).
- * Bundle identifier and RevenueCat / App Store Connect product must match:
- *   product id     metora_lifetime
- *   entitlement    metora_pro
- *   offering       default
+ * The (currently disabled) paywall expects these RevenueCat / App Store
+ * Connect identifiers: product `metora_lifetime`, entitlement `metora_pro`,
+ * offering `default`.
  */
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Metora',
+  name: 'Shot On',
   slug: 'metora',
   version: '2.0.0',
   orientation: 'portrait',
@@ -22,7 +25,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'light',
   ios: {
     bundleIdentifier: 'com.metora.app',
-    // iPhone only: builds with TARGETED_DEVICE_FAMILY = "1". Metora's layouts are
+    // iPhone only: builds with TARGETED_DEVICE_FAMILY = "1". The layouts are
     // designed for one-handed phone use, so iPad is out of scope for now.
     supportsTablet: false,
     icon: './assets/icon.png',
@@ -49,11 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-media-library',
       {
-        // Add-only: Metora writes new photos and never reads the library.
-        savePhotosPermission:
-          'Metora adds the clean copy to your photo library as a new photo. Your original photo is never changed.',
-        photosPermission:
-          'Metora only adds clean copies to your photo library. It does not browse or read your photos.',
+        // Add-only: Shot On writes new photos and never reads the library
+        // (the picker runs out of process and hands over only the chosen photo).
+        savePhotosPermission: 'Shot On saves your framed photos to your library.',
+        photosPermission: 'Shot On needs access to your photos so you can add a camera-info frame.',
         isAccessMediaLocationEnabled: false,
       },
     ],

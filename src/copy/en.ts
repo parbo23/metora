@@ -4,13 +4,14 @@
  * shown when the paywall is enabled (config/paywall.ts).
  */
 export const copy = {
-  brand: 'Metora',
+  brand: 'Shot On',
 
   home: {
-    subtitle: 'Show what you shot it with',
-    emptyTitle: 'Choose a photo to add a frame with its camera info',
+    headline: 'Show what you shot it with',
+    subtitle: 'Add a clean frame with the camera, lens settings and date to any photo.',
     choosePhoto: 'Choose Photo',
     loadingPhoto: 'Loading photo…',
+    exampleLabel: 'Example of a framed photo',
   },
 
   frame: {

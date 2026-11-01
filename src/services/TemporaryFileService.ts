@@ -6,7 +6,7 @@ import type { WorkSession } from '@/types/workflow';
 /** Sessions older than this are removed on launch. */
 export const STALE_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-const ROOT_DIRECTORY_NAME = 'metora-work';
+const ROOT_DIRECTORY_NAME = 'shoton-work';
 
 /** Characters allowed in a working-copy file name. Everything else becomes "_". */
 export function sanitizeFileName(name: string, fallback = 'photo'): string {
@@ -35,7 +35,7 @@ function newSessionId(): string {
 
 /**
  * Manages working copies of selected photos inside the app cache directory
- * (`<cache>/metora-work/<session>/`). Everything here is temporary: sessions
+ * (`<cache>/shoton-work/<session>/`). Everything here is temporary: sessions
  * are deleted when the workflow ends, and stale ones are swept at launch.
  *
  * Not available on web, where the picker URI is used directly.
