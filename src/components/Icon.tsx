@@ -32,7 +32,7 @@ interface IconBadgeProps extends IconProps {
   backgroundColor?: string;
 }
 
-/** Icon inside a soft circular badge, as used in metadata and option rows. */
+/** Icon inside a soft circular badge, as used in settings rows. */
 export function IconBadge({
   badgeSize = 36,
   backgroundColor = colors.navySoft,

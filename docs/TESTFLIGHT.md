@@ -1,4 +1,6 @@
-# Metora on TestFlight — step by step (from Windows)
+# TestFlight — step by step (from Windows)
+
+> **Paywall status:** the paywall is switched off in `src/config/paywall.ts` (`PAYWALL_ENABLED = false`). Steps 1.4, 1.5, 1.6 and section 2 (subscription, In-App Purchase key, RevenueCat) are only needed if the paywall is switched back on; the app never contacts RevenueCat while the flag is off.
 
 Everything runs through EAS in the cloud; no Mac is needed. Budget about 60–90 minutes the first time, most of it waiting for Apple and the build.
 

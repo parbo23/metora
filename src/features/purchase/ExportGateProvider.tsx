@@ -3,15 +3,18 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState, type
 
 import { usePurchases } from './PurchaseProvider';
 
+import { PAYWALL_ENABLED } from '@/config/paywall';
+
 /**
- * The single place where Pro is enforced. Inspecting metadata, choosing what
- * to remove and creating the clean copy are free; saving, sharing or otherwise
- * exporting a clean result requires Metora Pro.
+ * The single place where Pro is enforced. Picking a photo and previewing the
+ * frame are free; saving or sharing the framed photo would require Pro when
+ * the paywall is enabled (see config/paywall.ts).
  *
- * `requirePro(action)` runs the action immediately when Pro is active.
- * Otherwise it remembers the action, opens the paywall modal, and — once the
- * paywall reports a successful purchase or restore — resumes that exact action
- * so the user does not have to tap again. Closing the paywall drops it.
+ * `requirePro(action)` runs the action immediately when Pro is active or the
+ * paywall is disabled. Otherwise it remembers the action, opens the paywall
+ * modal, and, once the paywall reports a successful purchase or restore,
+ * resumes that exact action so the user does not have to tap again. Closing
+ * the paywall drops it.
  */
 export type ExportAction = () => void | Promise<void>;
 
@@ -35,7 +38,7 @@ export function ExportGateProvider({ children }: { children: ReactNode }) {
 
   const requirePro = useCallback(
     (action: ExportAction) => {
-      if (isUnlocked) {
+      if (!PAYWALL_ENABLED || isUnlocked) {
         void action();
         return;
       }

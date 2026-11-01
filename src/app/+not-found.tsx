@@ -11,7 +11,7 @@ export default function NotFoundScreen() {
   return (
     <Screen>
       <PrivacyCard variant="neutral" title={copy.notFound.title} body={copy.notFound.body} />
-      <PrimaryButton title={copy.tabs.home} onPress={() => router.replace('/')} />
+      <PrimaryButton title={copy.notFound.home} onPress={() => router.replace('/')} />
     </Screen>
   );
 }

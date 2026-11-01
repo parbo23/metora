@@ -1,34 +1,38 @@
 import { useCallback, useState } from 'react';
 
 import { openAppSettings, saveToPhotos, type SaveOutcome } from '@/services/PhotoSaveService';
-import { shareFile, type ShareOutcome } from '@/services/ShareService';
-import type { CleanResult } from '@/types/metadata';
+import { shareFile, type ShareFormat, type ShareOutcome } from '@/services/ShareService';
 import { haptics } from '@/utils/haptics';
 
 export type SaveState = { status: 'idle' } | { status: 'saving' } | { status: 'done'; outcome: SaveOutcome };
 export type ShareState =
   { status: 'idle' } | { status: 'sharing' } | { status: 'done'; outcome: ShareOutcome };
 
-/** Save-to-Photos and Share for one verified clean copy. */
-export function useSaveShare(result: CleanResult | null) {
+export interface ExportFile {
+  uri: string;
+  format: ShareFormat;
+}
+
+/** Save-to-Photos and Share for one exported file. */
+export function useSaveShare(file: ExportFile | null) {
   const [save, setSave] = useState<SaveState>({ status: 'idle' });
   const [share, setShare] = useState<ShareState>({ status: 'idle' });
 
   const saveCopy = useCallback(async () => {
-    if (!result || save.status === 'saving') return;
+    if (!file || save.status === 'saving') return;
     setSave({ status: 'saving' });
-    const outcome = await saveToPhotos(result.outputUri);
+    const outcome = await saveToPhotos(file.uri);
     if (outcome.kind === 'saved') haptics.success();
     else if (outcome.kind !== 'unavailable') haptics.error();
     setSave({ status: 'done', outcome });
-  }, [result, save.status]);
+  }, [file, save.status]);
 
   const shareCopy = useCallback(async () => {
-    if (!result || share.status === 'sharing') return;
+    if (!file || share.status === 'sharing') return;
     setShare({ status: 'sharing' });
-    const outcome = await shareFile(result.outputUri, result.outputFormat);
+    const outcome = await shareFile(file.uri, file.format);
     setShare({ status: 'done', outcome });
-  }, [result, share.status]);
+  }, [file, share.status]);
 
   return { save, share, saveCopy, shareCopy, openAppSettings };
 }

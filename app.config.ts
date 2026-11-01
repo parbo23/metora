@@ -14,7 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Metora',
   slug: 'metora',
-  version: '1.0.0',
+  version: '2.0.0',
   orientation: 'portrait',
   // App Store icon: 1024x1024 RGB, square corners, no alpha (assets/icon.png).
   icon: './assets/icon.png',

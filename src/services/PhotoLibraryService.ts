@@ -6,13 +6,9 @@ import { temporaryFileService, type TemporaryFileService } from './TemporaryFile
 import { isStillImage, toWorkflowPhoto } from '@/features/workflow/photoAssets';
 import type { WorkSession, WorkflowPhoto } from '@/types/workflow';
 
-export type PickPhotosResult =
-  | { kind: 'picked'; photos: WorkflowPhoto[]; failedCount: number }
-  | { kind: 'cancelled' }
-  | { kind: 'failed' };
+export type PickPhotoResult = { kind: 'picked'; photo: WorkflowPhoto } | { kind: 'cancelled' } | { kind: 'failed' };
 
 interface PickOptions {
-  allowsMultiple: boolean;
   session: WorkSession;
 }
 
@@ -27,27 +23,25 @@ const defaultDependencies: Dependencies = {
 };
 
 /**
- * Opens the system photo picker and brings the selection into the workflow.
+ * Opens the system photo picker for one photo and brings it into the workflow.
  *
- * Privacy notes:
  * - On iOS this is PHPickerViewController, which runs out of process and does
- *   not need photo-library permission; Metora only receives what the user taps.
+ *   not need photo-library permission; the app only receives what the user taps.
  * - `preferredAssetRepresentationMode: Current` asks for the original file
- *   (HEIC stays HEIC) instead of a transcoded JPEG.
- * - `exif: false` — metadata is read later from the file bytes, never via the
- *   picker, and never stored in state.
+ *   (HEIC stays HEIC) instead of a transcoded JPEG, so the camera info survives.
+ * - `exif: false`: camera info is read later from the working copy's bytes by
+ *   the metadata service, which is the single source for it.
  */
-export async function pickPhotos(
-  { allowsMultiple, session }: PickOptions,
+export async function pickPhoto(
+  { session }: PickOptions,
   deps: Dependencies = defaultDependencies,
-): Promise<PickPhotosResult> {
+): Promise<PickPhotoResult> {
   let result: ImagePicker.ImagePickerResult;
   try {
     result = await deps.launch({
       mediaTypes: ['images'],
-      allowsMultipleSelection: allowsMultiple,
-      selectionLimit: allowsMultiple ? 0 : 1,
-      orderedSelection: true,
+      allowsMultipleSelection: false,
+      selectionLimit: 1,
       allowsEditing: false,
       quality: 1,
       exif: false,
@@ -60,27 +54,17 @@ export async function pickPhotos(
 
   if (result.canceled) return { kind: 'cancelled' };
 
-  const assets = result.assets.filter(isStillImage);
-  if (assets.length === 0) return { kind: 'failed' };
+  const asset = result.assets.find(isStillImage);
+  if (!asset) return { kind: 'failed' };
 
-  const photos: WorkflowPhoto[] = [];
-  let failedCount = 0;
-  const now = Date.now();
-
-  // Sequential on purpose: one copy at a time keeps memory flat for large batches.
-  for (const [index, asset] of assets.entries()) {
-    try {
-      let uri = asset.uri;
-      if (deps.files.isSupported && Platform.OS !== 'web') {
-        const copy = await deps.files.importFile(asset.uri, session, asset.fileName ?? `photo-${index + 1}`);
-        uri = copy.uri;
-      }
-      photos.push(toWorkflowPhoto(asset, index, uri, now));
-    } catch {
-      failedCount += 1;
+  try {
+    let uri = asset.uri;
+    if (deps.files.isSupported && Platform.OS !== 'web') {
+      const copy = await deps.files.importFile(asset.uri, session, asset.fileName ?? 'photo');
+      uri = copy.uri;
     }
+    return { kind: 'picked', photo: toWorkflowPhoto(asset, 0, uri) };
+  } catch {
+    return { kind: 'failed' };
   }
-
-  if (photos.length === 0) return { kind: 'failed' };
-  return { kind: 'picked', photos, failedCount };
 }

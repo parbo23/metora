@@ -2,10 +2,9 @@ import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
 /**
- * Restrained haptics per the spec: success on a verified clean and a saved
- * copy, an error tap on an important failure, a light tick when choosing a
- * cleaning option. No-ops on web. Failures are swallowed: haptics must never
- * break a flow.
+ * Restrained haptics: success on a saved
+ * photo, an error tap on an important failure, a light tick on selection.
+ * No-ops on web. Failures are swallowed: haptics must never break a flow.
  */
 const enabled = Platform.OS === 'ios' || Platform.OS === 'android';
 

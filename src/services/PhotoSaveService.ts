@@ -3,7 +3,7 @@ import { Linking, Platform } from 'react-native';
 import { devLog } from '@/utils/devLog';
 
 /**
- * Saving a clean copy to the photo library.
+ * Saving an exported photo to the photo library.
  *
  * The file itself is handed to Photos: `Asset.create(uri)` from
  * expo-media-library maps to `PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL:)`,

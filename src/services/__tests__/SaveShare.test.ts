@@ -26,9 +26,9 @@ function saveDeps(overrides: Partial<SaveDependencies> = {}): SaveDependencies {
 describe('saveToPhotos', () => {
   it('requests write-only permission then saves the file as a new asset', async () => {
     const deps = saveDeps();
-    await expect(saveToPhotos('file:///cache/x-clean.heic', deps)).resolves.toEqual({ kind: 'saved' });
+    await expect(saveToPhotos('file:///cache/x-framed.heic', deps)).resolves.toEqual({ kind: 'saved' });
     expect(deps.requestPermission).toHaveBeenCalledTimes(1);
-    expect(deps.save).toHaveBeenCalledWith('file:///cache/x-clean.heic');
+    expect(deps.save).toHaveBeenCalledWith('file:///cache/x-framed.heic');
   });
 
   it('reports denial without saving and passes through canAskAgain', async () => {
@@ -63,7 +63,7 @@ describe('default save dependencies (file-based Photos API)', () => {
   });
 
   it('hands the output URI unchanged to Asset.create', async () => {
-    const uri = 'file:///cache/metora/work/abc/IMG_0001-clean.heic';
+    const uri = 'file:///cache/shoton-work/abc/IMG_0001-framed.heic';
     await defaultSaveDependencies.save(uri);
     expect(mockAssetCreate).toHaveBeenCalledTimes(1);
     expect(mockAssetCreate).toHaveBeenCalledWith(uri);
@@ -76,7 +76,7 @@ describe('default save dependencies (file-based Photos API)', () => {
   });
 
   it('passes the same URI through saveToPhotos end to end', async () => {
-    const uri = 'file:///cache/metora/work/abc/IMG_0002-clean.jpg';
+    const uri = 'file:///cache/shoton-work/abc/IMG_0002-framed.jpg';
     await expect(saveToPhotos(uri, { ...defaultSaveDependencies, platform: 'ios' })).resolves.toEqual({
       kind: 'saved',
     });
@@ -95,8 +95,8 @@ describe('shareFile', () => {
 
   it('shares with the right type for each format', async () => {
     const deps = shareDeps();
-    await expect(shareFile('file:///x-clean.heic', 'heic', deps)).resolves.toEqual({ kind: 'shared' });
-    expect(deps.share).toHaveBeenCalledWith('file:///x-clean.heic', {
+    await expect(shareFile('file:///x-framed.heic', 'heic', deps)).resolves.toEqual({ kind: 'shared' });
+    expect(deps.share).toHaveBeenCalledWith('file:///x-framed.heic', {
       mimeType: 'image/heic',
       UTI: 'public.heic',
     });

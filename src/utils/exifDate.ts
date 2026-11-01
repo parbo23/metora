@@ -30,10 +30,3 @@ function parseIsoLike(value: string): Date | undefined {
 function validDate(date: Date): Date | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
-
-/** "Sep 3, 2026 · 2:32 PM" */
-export function formatCaptureDate(date: Date, locale = 'en-US'): string {
-  const day = date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
-  const time = date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
-  return `${day} · ${time}`;
-}

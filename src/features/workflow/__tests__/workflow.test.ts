@@ -1,5 +1,5 @@
 import { displayNameFor, extensionFor, isStillImage, toWorkflowPhoto } from '../photoAssets';
-import { findPhoto, initialWorkflowState, routeForSelection, workflowReducer } from '../workflowState';
+import { findPhoto, initialWorkflowState, workflowReducer } from '../workflowState';
 
 import type { WorkflowPhoto } from '@/types/workflow';
 
@@ -13,17 +13,8 @@ const photo = (id: string): WorkflowPhoto => ({
   addedAt: 0,
 });
 
-describe('routeForSelection', () => {
-  it('routes one photo to the single flow and several to batch', () => {
-    expect(routeForSelection(0)).toBeNull();
-    expect(routeForSelection(1)).toBe('single');
-    expect(routeForSelection(2)).toBe('batch');
-    expect(routeForSelection(40)).toBe('batch');
-  });
-});
-
 describe('workflowReducer', () => {
-  const session = { id: 's1', directoryUri: 'file:///cache/metora-work/s1/' };
+  const session = { id: 's1', directoryUri: 'file:///cache/shoton-work/s1/' };
 
   it('tracks picking and clears errors when a new pick starts', () => {
     const failed = workflowReducer(initialWorkflowState, { type: 'pickFailed' });
@@ -32,29 +23,17 @@ describe('workflowReducer', () => {
     expect(picking).toMatchObject({ isPicking: true, error: null });
   });
 
-  it('replaces the selection on pick and exposes photos by id', () => {
-    const state = workflowReducer(initialWorkflowState, {
-      type: 'picked',
-      session,
-      photos: [photo('a'), photo('b')],
-      kind: 'batch',
-      skippedCount: 1,
-    });
-    expect(state.kind).toBe('batch');
-    expect(state.skippedCount).toBe(1);
+  it('replaces the photo on pick and exposes it by id', () => {
+    const first = workflowReducer(initialWorkflowState, { type: 'picked', session, photo: photo('a') });
+    const state = workflowReducer(first, { type: 'picked', session, photo: photo('b') });
+    expect(state.photo?.id).toBe('b');
     expect(findPhoto(state, 'b')?.displayName).toBe('b.jpg');
-    expect(findPhoto(state, 'zzz')).toBeNull();
+    expect(findPhoto(state, 'a')).toBeNull();
     expect(findPhoto(state, undefined)).toBeNull();
   });
 
   it('returns to the initial state when cleared', () => {
-    const state = workflowReducer(initialWorkflowState, {
-      type: 'picked',
-      session,
-      photos: [photo('a')],
-      kind: 'single',
-      skippedCount: 0,
-    });
+    const state = workflowReducer(initialWorkflowState, { type: 'picked', session, photo: photo('a') });
     expect(workflowReducer(state, { type: 'cleared' })).toEqual(initialWorkflowState);
   });
 
@@ -102,11 +81,11 @@ describe('photo asset mapping', () => {
         exif: { GPSLatitude: 52.3 },
       },
       0,
-      'file:///cache/metora-work/s1/IMG_0421.HEIC',
+      'file:///cache/shoton-work/s1/IMG_0421.HEIC',
       1_700_000_000_000,
     );
     expect(result).toMatchObject({
-      uri: 'file:///cache/metora-work/s1/IMG_0421.HEIC',
+      uri: 'file:///cache/shoton-work/s1/IMG_0421.HEIC',
       displayName: 'IMG_0421.HEIC',
       extension: 'heic',
       mimeType: 'image/heic',

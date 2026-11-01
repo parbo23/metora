@@ -16,7 +16,7 @@ interface EmptyStateCardProps {
 }
 
 /**
- * Dashed picker card from the board's Home and Batch screens: layered photo
+ * Dashed picker card on Home: layered photo
  * illustration with a plus button, optional copy, and the primary action.
  */
 export function EmptyStateCard({

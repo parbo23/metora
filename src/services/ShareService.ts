@@ -1,10 +1,11 @@
 import * as Sharing from 'expo-sharing';
 
-import type { OutputFormat } from '@/types/metadata';
 import { devLog } from '@/utils/devLog';
 
-/** Share the verified clean copy through the system share sheet. */
+/** Share an exported file through the system share sheet. */
 export type ShareOutcome = { kind: 'shared' } | { kind: 'unavailable' } | { kind: 'failed' };
+
+export type ShareFormat = 'jpeg' | 'png' | 'heic';
 
 export interface ShareDependencies {
   isAvailable: () => Promise<boolean>;
@@ -16,20 +17,19 @@ const defaultDependencies: ShareDependencies = {
   share: (uri, options) => Sharing.shareAsync(uri, options),
 };
 
-const TYPES: Record<OutputFormat, { mimeType: string; UTI: string }> = {
+const TYPES: Record<ShareFormat, { mimeType: string; UTI: string }> = {
   jpeg: { mimeType: 'image/jpeg', UTI: 'public.jpeg' },
   png: { mimeType: 'image/png', UTI: 'public.png' },
   heic: { mimeType: 'image/heic', UTI: 'public.heic' },
-  other: { mimeType: 'application/octet-stream', UTI: 'public.data' },
 };
 
-export function shareTypeFor(format: OutputFormat): { mimeType: string; UTI: string } {
+export function shareTypeFor(format: ShareFormat): { mimeType: string; UTI: string } {
   return TYPES[format];
 }
 
 export async function shareFile(
   uri: string,
-  format: OutputFormat,
+  format: ShareFormat,
   deps: ShareDependencies = defaultDependencies,
 ): Promise<ShareOutcome> {
   try {

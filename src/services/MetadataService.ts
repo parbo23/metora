@@ -1,11 +1,7 @@
-import { DOMParser } from '@xmldom/xmldom';
 import { File } from 'expo-file-system';
 import * as ExifReader from 'exifreader';
 import { Platform } from 'react-native';
 
-import { resolveCategories } from '@/features/cleaning/cleanModes';
-import { normalizeTags, remainingCategories } from '@/features/metadata/normalize';
-import type { CleanTarget, MetadataSnapshot, VerificationResult } from '@/types/metadata';
 import { devLog } from '@/utils/devLog';
 
 export class MetadataReadError extends Error {
@@ -17,18 +13,20 @@ export class MetadataReadError extends Error {
   }
 }
 
+/** Parsed tag containers (exif, gps, file, …) as ExifReader returns them in expanded mode. */
+export type ImageTags = ExifReader.ExpandedTags;
+
 export interface MetadataService {
-  /** Reads and normalizes the metadata embedded in the file at `uri`. */
-  inspect(uri: string): Promise<MetadataSnapshot>;
-  /** Normalizes metadata from bytes already in memory. */
-  inspectBytes(buffer: ArrayBuffer): MetadataSnapshot;
-  /** Re-reads an exported file and checks the promised categories are gone. */
-  verifyClean(uri: string, target: CleanTarget): Promise<VerificationResult>;
+  /**
+   * Reads the tags embedded in the file at `uri`. A photo without camera tags
+   * yields only the structural `file` container (or `{}` for formats without one).
+   */
+  readTags(uri: string): Promise<ImageTags>;
 }
 
 /**
- * Reads the whole file into memory. Metadata lives in the first kilobytes of
- * most files but HEIC/PNG place it anywhere, and the parser needs the bytes,
+ * Reads the whole file into memory. The tags live in the first kilobytes of
+ * most files but HEIC places them anywhere, and the parser needs the bytes,
  * not decoded pixels, so no image decoding happens here.
  */
 export async function readFileBytes(uri: string): Promise<ArrayBuffer> {
@@ -44,17 +42,16 @@ export async function readFileBytes(uri: string): Promise<ArrayBuffer> {
 }
 
 type ReadBytes = (uri: string) => Promise<ArrayBuffer>;
-type LoadOptions = NonNullable<Parameters<typeof ExifReader.load>[1]>;
-type XmlDomParser = LoadOptions['domParser'];
 
 /**
- * ExifReader-backed implementation. Pure JavaScript, fully on-device.
- * XMP needs an XML parser, which React Native lacks, so xmldom is supplied.
+ * ExifReader-backed implementation. Pure JavaScript, fully on-device. This is
+ * the single source of camera info: it reads the original bytes of the working
+ * copy, so it sees the full EXIF even for HEIC straight from the camera.
  */
 export class ExifReaderMetadataService implements MetadataService {
   constructor(private readonly readBytes: ReadBytes = readFileBytes) {}
 
-  async inspect(uri: string): Promise<MetadataSnapshot> {
+  async readTags(uri: string): Promise<ImageTags> {
     let buffer: ArrayBuffer;
     try {
       buffer = await this.readBytes(uri);
@@ -62,37 +59,21 @@ export class ExifReaderMetadataService implements MetadataService {
       devLog('metadata: read failed', error instanceof Error ? error.name : 'unknown');
       throw new MetadataReadError();
     }
-    return this.inspectBytes(buffer);
+    return this.readTagsFromBytes(buffer);
   }
 
-  /** Same as inspect() for bytes already in memory (avoids a second file read). */
-  inspectBytes(buffer: ArrayBuffer): MetadataSnapshot {
-    let tags: ExifReader.ExpandedTags;
+  /** Same as readTags() for bytes already in memory. */
+  readTagsFromBytes(buffer: ArrayBuffer): ImageTags {
     try {
-      tags = ExifReader.load(buffer, {
-        expanded: true,
-        includeUnknown: false,
-        domParser: new DOMParser() as unknown as XmlDomParser,
-      });
+      // No XML parser is supplied, so XMP is left unparsed; only EXIF/TIFF is needed.
+      return ExifReader.load(buffer, { expanded: true, includeUnknown: false });
     } catch (error) {
-      // "No Exif data" style errors mean a readable image without metadata;
+      // "No Exif data" style errors mean a readable image without tags;
       // format errors mean the file is not an image we can open.
-      if (isMetadataMissingError(error)) {
-        return normalizeTags({});
-      }
+      if (isMetadataMissingError(error)) return {};
       devLog('metadata: parse failed', error instanceof Error ? error.name : 'unknown');
       throw new MetadataReadError();
     }
-
-    const snapshot = normalizeTags(tags);
-    devLog('metadata: inspected', { tags: snapshot.raw.length, categories: snapshot.categories });
-    return snapshot;
-  }
-
-  async verifyClean(uri: string, target: CleanTarget): Promise<VerificationResult> {
-    const snapshot = await this.inspect(uri);
-    const remaining = remainingCategories(snapshot, resolveCategories(target));
-    return { verified: remaining.length === 0, remainingCategories: remaining };
   }
 }
 

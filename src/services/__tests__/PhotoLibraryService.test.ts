@@ -1,6 +1,6 @@
 import type { ImagePickerAsset, ImagePickerResult } from 'expo-image-picker';
 
-import { pickPhotos } from '../PhotoLibraryService';
+import { pickPhoto } from '../PhotoLibraryService';
 import { isStale, sanitizeFileName, STALE_SESSION_MAX_AGE_MS } from '../TemporaryFileService';
 
 jest.mock('expo-image-picker', () => ({
@@ -20,7 +20,7 @@ jest.mock('expo-file-system', () => ({
   Paths: { cache: {} },
 }));
 
-const session = { id: 's1', directoryUri: 'file:///cache/metora-work/s1/' };
+const session = { id: 's1', directoryUri: 'file:///cache/shoton-work/s1/' };
 
 function asset(overrides: Partial<ImagePickerAsset> = {}): ImagePickerAsset {
   return {
@@ -34,7 +34,7 @@ function asset(overrides: Partial<ImagePickerAsset> = {}): ImagePickerAsset {
 }
 
 function deps(result: ImagePickerResult, importFile?: jest.Mock) {
-  type Files = Parameters<typeof pickPhotos>[1] extends { files: infer F } | undefined ? F : never;
+  type Files = Parameters<typeof pickPhoto>[1] extends { files: infer F } | undefined ? F : never;
   const files = {
     isSupported: true,
     importFile:
@@ -44,15 +44,15 @@ function deps(result: ImagePickerResult, importFile?: jest.Mock) {
   return { launch: jest.fn().mockResolvedValue(result), files: files as unknown as Files & typeof files };
 }
 
-describe('pickPhotos', () => {
-  it('asks the picker for original still images without EXIF and never for editing', async () => {
+describe('pickPhoto', () => {
+  it('asks the picker for one original still image, without picker EXIF and never for editing', async () => {
     const d = deps({ canceled: false, assets: [asset()] });
-    await pickPhotos({ allowsMultiple: true, session }, d);
+    await pickPhoto({ session }, d);
     expect(d.launch).toHaveBeenCalledWith(
       expect.objectContaining({
         mediaTypes: ['images'],
-        allowsMultipleSelection: true,
-        selectionLimit: 0,
+        allowsMultipleSelection: false,
+        selectionLimit: 1,
         allowsEditing: false,
         exif: false,
         base64: false,
@@ -62,73 +62,40 @@ describe('pickPhotos', () => {
     );
   });
 
-  it('limits single selection to one photo', async () => {
-    const d = deps({ canceled: false, assets: [asset()] });
-    await pickPhotos({ allowsMultiple: false, session }, d);
-    expect(d.launch).toHaveBeenCalledWith(
-      expect.objectContaining({ allowsMultipleSelection: false, selectionLimit: 1 }),
-    );
-  });
-
   it('reports cancellation without touching files', async () => {
     const d = deps({ canceled: true, assets: null });
-    await expect(pickPhotos({ allowsMultiple: true, session }, d)).resolves.toEqual({ kind: 'cancelled' });
+    await expect(pickPhoto({ session }, d)).resolves.toEqual({ kind: 'cancelled' });
     expect(d.files.importFile).not.toHaveBeenCalled();
   });
 
-  it('copies each selected image into the session and returns workflow photos', async () => {
-    const d = deps({
-      canceled: false,
-      assets: [asset(), asset({ uri: 'file:///picker/b.heic', fileName: 'b.HEIC' })],
-    });
-    const result = await pickPhotos({ allowsMultiple: true, session }, d);
+  it('copies the selected image into the session and returns a workflow photo', async () => {
+    const d = deps({ canceled: false, assets: [asset({ uri: 'file:///picker/b.heic', fileName: 'b.HEIC' })] });
+    const result = await pickPhoto({ session }, d);
     expect(result.kind).toBe('picked');
     if (result.kind !== 'picked') return;
-    expect(result.photos).toHaveLength(2);
-    expect(result.photos[1]).toMatchObject({
+    expect(result.photo).toMatchObject({
       uri: `${session.directoryUri}b.HEIC`,
       displayName: 'b.HEIC',
       extension: 'heic',
     });
-    expect(result.failedCount).toBe(0);
-    expect(d.files.importFile).toHaveBeenCalledTimes(2);
+    expect(d.files.importFile).toHaveBeenCalledTimes(1);
   });
 
-  it('skips videos and counts photos that could not be copied', async () => {
-    const importFile = jest
-      .fn()
-      .mockResolvedValueOnce({ uri: `${session.directoryUri}a.jpg` })
-      .mockRejectedValueOnce(new Error('copy failed'));
-    const d = deps(
-      {
-        canceled: false,
-        assets: [
-          asset(),
-          asset({ uri: 'file:///picker/bad.jpg', fileName: 'bad.jpg' }),
-          asset({ type: 'video' }),
-        ],
-      },
-      importFile,
-    );
-    const result = await pickPhotos({ allowsMultiple: true, session }, d);
-    expect(result).toMatchObject({ kind: 'picked', failedCount: 1 });
-    if (result.kind === 'picked') expect(result.photos).toHaveLength(1);
+  it('fails when the copy fails', async () => {
+    const importFile = jest.fn().mockRejectedValueOnce(new Error('copy failed'));
+    const d = deps({ canceled: false, assets: [asset()] }, importFile);
+    await expect(pickPhoto({ session }, d)).resolves.toEqual({ kind: 'failed' });
   });
 
   it('fails when nothing usable was selected or the picker throws', async () => {
     await expect(
-      pickPhotos(
-        { allowsMultiple: true, session },
-        deps({ canceled: false, assets: [asset({ type: 'video' })] }),
-      ),
+      pickPhoto({ session }, deps({ canceled: false, assets: [asset({ type: 'video' })] })),
     ).resolves.toEqual({ kind: 'failed' });
     const throwing = {
       launch: jest.fn().mockRejectedValue(new Error('boom')),
       files: { isSupported: true, importFile: jest.fn() },
     };
-    await expect(pickPhotos({ allowsMultiple: true, session }, throwing)).resolves.toEqual({
-      kind: 'failed',
-    });
+    await expect(pickPhoto({ session }, throwing)).resolves.toEqual({ kind: 'failed' });
   });
 });
 

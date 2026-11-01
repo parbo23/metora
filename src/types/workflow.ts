@@ -1,10 +1,10 @@
 /**
- * Temporary workflow model: what the user picked, where its working copy
- * lives, and nothing else. No EXIF or GPS is stored here; metadata is read on
- * demand in the inspection step (Phase 4) and never persisted.
+ * Temporary workflow model: the photo the user picked, where its working copy
+ * lives, and nothing else. Camera info is read on demand from the working
+ * copy's bytes and never stored here.
  */
 export interface WorkflowPhoto {
-  /** Stable id for routing (`/photo/[id]`). */
+  /** Stable id for routing. */
   id: string;
   /** file:// URI of the working copy in app cache (or the picker URI on web). */
   uri: string;
@@ -19,10 +19,8 @@ export interface WorkflowPhoto {
   addedAt: number;
 }
 
-export type WorkflowKind = 'single' | 'batch';
-
 export interface WorkSession {
   id: string;
-  /** file:// URI of the session directory holding working copies. */
+  /** file:// URI of the session directory holding the working copy and outputs. */
   directoryUri: string;
 }
