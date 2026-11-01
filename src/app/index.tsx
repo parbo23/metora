@@ -11,12 +11,17 @@ import { usePhotoWorkflow } from '@/features/workflow/PhotoWorkflowProvider';
 import { colors, spacing } from '@/theme';
 
 /**
- * Home: the single empty state. Picking a photo brings it into the workflow;
- * the preview screen that follows is added in the next phase.
+ * Home: the single empty state. Picking a photo brings it into the workflow
+ * and opens the preview.
  */
 export default function HomeScreen() {
   const router = useRouter();
   const { choosePhoto, isPicking, error } = usePhotoWorkflow();
+
+  const onChoosePhoto = async () => {
+    const photo = await choosePhoto();
+    if (photo) router.push('/photo/preview');
+  };
 
   return (
     <Screen>
@@ -43,7 +48,7 @@ export default function HomeScreen() {
       <EmptyStateCard
         title={copy.home.emptyTitle}
         actionTitle={isPicking ? copy.home.loadingPhoto : copy.home.choosePhoto}
-        onAction={() => void choosePhoto()}
+        onAction={() => void onChoosePhoto()}
         actionLoading={isPicking}
       />
 

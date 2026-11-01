@@ -32,6 +32,7 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="photo/preview" options={{ title: copy.preview.title }} />
             <Stack.Screen name="settings" options={{ title: copy.settings.title }} />
             <Stack.Protected guard={PAYWALL_ENABLED}>
               <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />

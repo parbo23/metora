@@ -13,6 +13,17 @@ export const copy = {
     loadingPhoto: 'Loading photo…',
   },
 
+  frame: {
+    /** Title line printed on the frame. */
+    shotOn: (camera: string) => `Shot on ${camera}`,
+    noCameraInfo: 'No camera info found in this photo',
+  },
+
+  preview: {
+    title: 'Preview',
+    reading: 'Reading camera info…',
+  },
+
   export: {
     saving: 'Saving…',
     saveToPhotos: 'Save to Photos',
