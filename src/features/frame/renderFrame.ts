@@ -1,15 +1,7 @@
-import {
-  ImageFormat,
-  listFontFamilies,
-  matchFont,
-  Skia,
-  type SkCanvas,
-  type SkFont,
-  type SkImage,
-} from '@shopify/react-native-skia';
+import { ImageFormat, Skia, type SkCanvas, type SkFont, type SkImage, type SkTypeface } from '@shopify/react-native-skia';
+import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { Platform } from 'react-native';
 
 import { classicFrameLayout, exportWidthFor, FRAME_COLORS, type FrameLines, type TextLine } from './classicFrame';
 
@@ -118,15 +110,15 @@ async function drawFrame(
       photoPaint,
     );
 
-    const family = systemFontFamily();
+    const typefaces = await loadTypefaces();
     if (layout.title && input.lines.title) {
-      drawLine(canvas, input.lines.title, layout.title, layout.leftX, 'left', family);
+      drawLine(canvas, input.lines.title, layout.title, layout.leftX, 'left', typefaces);
     }
     if (layout.settings && input.lines.settings) {
-      drawLine(canvas, input.lines.settings, layout.settings, layout.leftX, 'left', family);
+      drawLine(canvas, input.lines.settings, layout.settings, layout.leftX, 'left', typefaces);
     }
     if (layout.date && input.lines.date) {
-      drawLine(canvas, input.lines.date, layout.date, layout.rightX, 'right', family);
+      drawLine(canvas, input.lines.date, layout.date, layout.rightX, 'right', typefaces);
     }
 
     surface.flush();
@@ -153,9 +145,9 @@ function drawLine(
   line: TextLine,
   anchorX: number,
   align: 'left' | 'right',
-  family: string | undefined,
+  typefaces: FrameTypefaces,
 ) {
-  const font = fontFor(line, family);
+  const font = fontFor(line, typefaces);
   const paint = Skia.Paint();
   paint.setAntiAlias(true);
   paint.setColor(Skia.Color(line.color));
@@ -167,32 +159,50 @@ function drawLine(
   canvas.drawText(text, x, baseline, paint, font);
 }
 
-function fontFor(line: TextLine, family: string | undefined): SkFont {
-  return matchFont({
-    fontFamily: family,
-    fontSize: line.fontSize,
-    fontWeight: line.weight === 'bold' ? '600' : '400',
-    fontStyle: 'normal',
-  });
+function fontFor(line: TextLine, typefaces: FrameTypefaces): SkFont {
+  return Skia.Font(line.weight === 'bold' ? typefaces.semiBold : typefaces.regular, line.fontSize);
 }
 
-/** Candidate system families, best first; the first one the font manager knows wins. */
-const FAMILY_CANDIDATES: Record<string, string[]> = {
-  ios: ['SF Pro Text', 'SF Pro Display', 'SF Pro', '.AppleSystemUIFont', 'Helvetica Neue', 'Helvetica'],
-  android: ['Roboto', 'sans-serif'],
+/** The bundled frame fonts: Inter Regular and SemiBold (SIL OFL, assets/fonts). */
+interface FrameTypefaces {
+  regular: SkTypeface;
+  semiBold: SkTypeface;
+}
+
+const FONT_MODULES = {
+  regular: require('@/assets/fonts/Inter-Regular.ttf') as number,
+  semiBold: require('@/assets/fonts/Inter-SemiBold.ttf') as number,
 };
 
-let cachedFamily: string | undefined | null = null;
+let typefacesPromise: Promise<FrameTypefaces> | null = null;
 
-function systemFontFamily(): string | undefined {
-  if (cachedFamily !== null) return cachedFamily;
-  try {
-    const available = new Set(listFontFamilies());
-    const candidates = FAMILY_CANDIDATES[Platform.OS] ?? [];
-    cachedFamily = candidates.find((name) => available.has(name));
-  } catch {
-    cachedFamily = undefined;
+/**
+ * Loads the bundled typefaces once per app run. Bundling the font (instead of
+ * asking the system font manager) makes the frame look identical on every
+ * device and in the example image.
+ */
+function loadTypefaces(): Promise<FrameTypefaces> {
+  if (!typefacesPromise) {
+    typefacesPromise = Promise.all([loadTypeface(FONT_MODULES.regular), loadTypeface(FONT_MODULES.semiBold)])
+      .then(([regular, semiBold]) => ({ regular, semiBold }))
+      .catch((error: unknown) => {
+        typefacesPromise = null; // allow a retry on the next render
+        throw error;
+      });
   }
-  devLog('render: font family', cachedFamily ?? 'default');
-  return cachedFamily;
+  return typefacesPromise;
+}
+
+async function loadTypeface(module: number): Promise<SkTypeface> {
+  const asset = Asset.fromModule(module);
+  await asset.downloadAsync();
+  const uri = asset.localUri ?? asset.uri;
+  const data = await Skia.Data.fromURI(uri);
+  try {
+    const typeface = Skia.Typeface.MakeFreeTypeFaceFromData(data);
+    if (!typeface) throw new Error('typeface failed');
+    return typeface;
+  } finally {
+    data.dispose();
+  }
 }

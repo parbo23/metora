@@ -25,7 +25,7 @@ Branch `shot-on-v2`. Bundle id stays `com.metora.app` (changing it would create 
 | 9 | Deny photo permission ("Add Photos Only" off) | Clear message + "Open Settings" works | [ ] |
 | 10 | Save + Share | Both work; saved image is full resolution (check pixel size in Photos › info) | [ ] |
 | 11 | Save to Photos | Toast "Saved to Photos" + haptic; original photo unchanged | [ ] |
-| 12 | Font | Bar text uses the system font (SF Pro) on device; check the dev log line `render: font family` | [ ] |
+| 12 | Font | Bar text uses the bundled Inter (Regular + SemiBold from `assets/fonts`) and matches the example image on Home | [ ] |
 
 ## App Store submission (manual)
 

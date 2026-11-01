@@ -9,6 +9,7 @@
     "@types/jest": "29.5.14",
     "exifreader": "^4.44.1",
     "expo": "~57.0.20",
+    "expo-asset": "~57.0.20",
     "expo-constants": "~57.0.17",
     "expo-dev-client": "~57.0.18",
     "expo-device": "~57.0.1",
