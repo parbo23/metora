@@ -22,6 +22,10 @@ export const copy = {
   preview: {
     title: 'Preview',
     reading: 'Reading camera info…',
+    rendering: 'Preparing your frame…',
+    framedPhoto: 'Framed photo',
+    renderFailedTitle: "Couldn't prepare the frame",
+    renderFailedBody: 'Please try another photo.',
   },
 
   export: {

@@ -1,4 +1,6 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -8,15 +10,17 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { PrivacyCard } from '@/components/PrivacyCard';
 import { Screen } from '@/components/Screen';
 import { copy } from '@/copy/en';
-import { frameText } from '@/features/shotinfo/format';
+import { useFrameRender } from '@/features/frame/useFrameRender';
+import { frameText, type FrameText } from '@/features/shotinfo/format';
 import { useShotInfo } from '@/features/shotinfo/useShotInfo';
 import { usePhotoWorkflow } from '@/features/workflow/PhotoWorkflowProvider';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 import type { WorkflowPhoto } from '@/types/workflow';
 
 /**
- * Preview: the picked photo and the lines the frame will print. The camera
- * info is read from the working copy's original bytes.
+ * Preview: the framed photo exactly as it will be exported. The camera info
+ * is read from the working copy's original bytes first; the frame is then
+ * rendered at full resolution and shown downscaled.
  */
 export default function PreviewScreen() {
   const router = useRouter();
@@ -39,63 +43,85 @@ export default function PreviewScreen() {
 }
 
 function PreviewContent({ photo }: { photo: WorkflowPhoto }) {
-  const state = useShotInfo(photo.uri);
-  const aspectRatio = photo.width && photo.height ? photo.width / photo.height : 4 / 3;
+  const { session } = usePhotoWorkflow();
+  const info = useShotInfo(photo.uri);
+  const text = useMemo(() => (info.status === 'ready' ? frameText(info.info) : null), [info]);
+  const render = useFrameRender(photo, session, text);
 
-  return (
-    <Screen safeTop={false}>
-      <PhotoPreview
-        source={{ uri: photo.uri }}
-        aspectRatio={Math.min(Math.max(aspectRatio, 3 / 4), 16 / 9)}
-        accessibilityLabel={photo.displayName}
-      />
-
-      {state.status === 'loading' ? (
-        <Card style={styles.loading} accessibilityLabel={copy.preview.reading}>
-          <ActivityIndicator color={colors.navy900} />
-          <AppText variant="secondary" color="textSecondary">
-            {copy.preview.reading}
-          </AppText>
-        </Card>
-      ) : null}
-
-      {state.status === 'unreadable' ? (
+  if (info.status === 'unreadable') {
+    return (
+      <Screen safeTop={false}>
         <PrivacyCard
           variant="warning"
           title={copy.errors.photoUnreadableTitle}
           body={copy.errors.photoUnreadableBody}
         />
+      </Screen>
+    );
+  }
+
+  const busyLabel =
+    info.status === 'loading' ? copy.preview.reading : render.status === 'rendering' ? copy.preview.rendering : null;
+
+  return (
+    <Screen safeTop={false}>
+      {render.status === 'ready' ? (
+        <View style={styles.frameWrap} accessibilityLabel={copy.preview.framedPhoto}>
+          <Image
+            source={{ uri: render.frame.uri }}
+            contentFit="contain"
+            style={[styles.frame, { aspectRatio: render.frame.width / render.frame.height }]}
+            accessible
+            accessibilityLabel={copy.preview.framedPhoto}
+          />
+        </View>
+      ) : (
+        <PhotoPreview
+          source={{ uri: photo.uri }}
+          aspectRatio={Math.min(Math.max(photo.width && photo.height ? photo.width / photo.height : 4 / 3, 3 / 4), 16 / 9)}
+          accessibilityLabel={photo.displayName}
+        />
+      )}
+
+      {busyLabel ? (
+        <Card style={styles.busy} accessibilityRole="progressbar" accessibilityLabel={busyLabel}>
+          <ActivityIndicator color={colors.navy900} />
+          <AppText variant="secondary" color="textSecondary">
+            {busyLabel}
+          </AppText>
+        </Card>
       ) : null}
 
-      {state.status === 'ready' ? <FrameLines {...frameText(state.info)} /> : null}
+      {text && !text.hasCameraInfo ? (
+        <AppText variant="caption" color="textSecondary" align="center">
+          {copy.frame.noCameraInfo}
+        </AppText>
+      ) : null}
+
+      {render.status === 'failed' ? (
+        <PrivacyCard variant="warning" title={copy.preview.renderFailedTitle} body={copy.preview.renderFailedBody} />
+      ) : null}
+
+      {render.status === 'unavailable' && text ? <FrameLines text={text} /> : null}
     </Screen>
   );
 }
 
-function FrameLines({
-  title,
-  settings,
-  date,
-  hasCameraInfo,
-}: ReturnType<typeof frameText>) {
+/** Web preview only: the lines the frame prints, since the renderer is native. */
+function FrameLines({ text }: { text: FrameText }) {
   return (
     <Card style={styles.lines} accessibilityRole="summary">
       <View style={styles.left}>
-        {title ? <AppText variant="cardHeading">{title}</AppText> : null}
-        {settings ? (
+        {text.title ? <AppText variant="cardHeading">{text.title}</AppText> : null}
+        {text.settings ? (
           <AppText variant="secondary" color="textSecondary">
-            {settings}
-          </AppText>
-        ) : null}
-        {!hasCameraInfo ? (
-          <AppText variant="caption" color="textSecondary">
-            {copy.frame.noCameraInfo}
+            {text.settings}
           </AppText>
         ) : null}
       </View>
-      {date ? (
+      {text.date ? (
         <AppText variant="secondary" color="textSecondary">
-          {date}
+          {text.date}
         </AppText>
       ) : null}
     </Card>
@@ -103,7 +129,15 @@ function FrameLines({
 }
 
 const styles = StyleSheet.create({
-  loading: {
+  frameWrap: {
+    borderRadius: radius.card,
+    overflow: 'hidden',
+    backgroundColor: colors.navySoft,
+  },
+  frame: {
+    width: '100%',
+  },
+  busy: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
